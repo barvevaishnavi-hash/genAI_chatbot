@@ -1,71 +1,65 @@
-import ollama
+import os
+from dotenv import load_dotenv
+from google import genai
 
-messages = [
-    {
-        "role": "system",
-        "content": (
-            "You are a helpful AI assistant. "
-            "Answer in simple, student-friendly language. "
-            "For programming questions, provide examples. "
-            "Keep answers clear, concise, and well formatted."
-        )
-    }
-]
+# Load .env
+load_dotenv()
+
+# Create Gemini client
+client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY")
+)
+
+# Conversation history
+messages = []
 
 
 def get_response(user_message, pdf_text=""):
     global messages
 
-    # If a PDF is uploaded, add its content to the prompt
-    if pdf_text:
-        user_message = f"""
-Use the following PDF to answer the question.
+    try:
+        if pdf_text:
+            prompt = f"""
+You are a helpful AI assistant.
+
+Use the following PDF content to answer the user's question.
 
 PDF Content:
 {pdf_text}
 
-Question:
+User Question:
 {user_message}
-
-If the answer is not available in the PDF,
-say:
-'I couldn't find this information in the uploaded PDF.'
 """
+        else:
+            prompt = user_message
 
-    messages.append(
-        {
-            "role": "user",
-            "content": user_message
-        }
-    )
+        messages.append(
+            {
+                "role": "user",
+                "content": prompt
+            }
+        )
 
-    response = ollama.chat(
-        model="llama3.2:1b",
-        messages=messages
-    )
+        response = client.models.generate_content(
+            model="gemini-3.5-flash",
+            contents=prompt
+        )
 
-    assistant_reply = response["message"]["content"]
+        assistant_reply = response.text
 
-    messages.append(
-        {
-            "role": "assistant",
-            "content": assistant_reply
-        }
-    )
+        messages.append(
+            {
+                "role": "assistant",
+                "content": assistant_reply
+            }
+        )
 
-    return assistant_reply
+        return assistant_reply
+
+    except Exception as e:
+        return f"❌ Error: {e}"
 
 
 def clear_memory():
     global messages
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a helpful AI assistant. "
-                "Answer in simple, student-friendly language. "
-                "For programming questions, provide examples. "
-                "Keep answers clear, concise, and well formatted."
-            )
-        }
-    ]
+    messages = []
