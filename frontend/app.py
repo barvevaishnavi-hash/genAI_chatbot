@@ -1,6 +1,11 @@
 import streamlit as st
 import requests
 
+# ===============================
+# Render Backend URL
+# ===============================
+BACKEND_URL = "https://genai-chatbot-qgbt.onrender.com"
+
 st.set_page_config(
     page_title="GenAI Chatbot",
     page_icon="🤖",
@@ -132,8 +137,8 @@ with st.sidebar:
 
         try:
             response = requests.post(
-                "http://127.0.0.1:8000/upload-pdf",
-                files=files
+             f"{BACKEND_URL}/upload-pdf",
+             files=files
             )
 
             if response.status_code == 200:
@@ -167,7 +172,7 @@ with st.sidebar:
     # ---------------- Clear Chat ----------------
 
     if st.button("🗑 Clear Chat", use_container_width=True):
-        requests.post("http://127.0.0.1:8000/clear")
+        requests.post(f"{BACKEND_URL}/clear")     
         st.session_state.messages = []
         st.rerun()
 
@@ -251,10 +256,9 @@ if user_input:
             try:
 
                 response = requests.post(
-                    "http://127.0.0.1:8000/chat",
-                    json={"message": user_input},
-                    timeout=180
-                
+                 f"{BACKEND_URL}/chat",
+                 json={"message": user_input},
+                timeout=180
                 )
 
                 response.raise_for_status()
